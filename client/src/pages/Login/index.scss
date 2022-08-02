@@ -1,0 +1,32 @@
+.login{
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    background: ghostwhite;
+    
+    .login-container {
+        width: 500px;
+        // height: 430px;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 50px rgb(0 0 0 / 10%);
+      }
+   
+      .forgetPassword{
+        float: right;
+      }
+
+      .registerBtn {
+        display: block;
+        text-align: center;
+        margin-top: 5px;
+      }
+
+      .ant-card-head{
+        background-image: linear-gradient(to right, #1890ff , rgb(205, 252, 230));
+      }
+}

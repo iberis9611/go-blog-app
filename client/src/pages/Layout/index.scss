@@ -1,0 +1,32 @@
+.ant-layout {
+
+    .ant-layout-header {
+        padding: 0;
+        background: white;
+
+        .logo {
+            background: url('~@/assets/logo1.png') no-repeat center / 170px auto;
+        }
+
+        .ant-col-19{
+            display: flex;
+
+            .ant-input-group-wrapper {
+                width: auto;
+
+                .ant-input-group {
+                    top: 11.93px;
+                }
+            }
+
+            .header-avatar {
+                margin-left: 35px;
+                top: 12px;
+            }
+            
+            .header-uname {
+                margin-left: 15px;
+            }
+        }
+    }
+}

@@ -1,0 +1,25 @@
+.mainWrapper {
+    display: flex;
+    margin: 5px;
+    
+    .articleWrapper{
+        width: 70%;
+    
+        .article {
+            margin-top: 14px;
+        }
+    
+        .likesPanel {
+            margin-top: 14px;
+        }
+    
+        .comment {
+            margin-top: 14px;
+        }
+    }
+    
+    .rightPanel {
+        width: 29.5%;
+        margin-left: 0.5%;
+    }
+}
