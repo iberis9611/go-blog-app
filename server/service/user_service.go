@@ -14,11 +14,8 @@ func ValidateUsername(username string) bool {
 	var countUsername int64
 	// SELECT count(1) FROM users WHERE username = ?
 	db.Model(&model.User{}).Where("username = ?", username).Count(&countUsername)
-	if countUsername != 0 {
-		return true
-	}
 
-	return false
+	return countUsername != 0
 }
 
 // 校验昵称是否已存在
@@ -28,11 +25,8 @@ func ValidateNickname(nickname string) bool {
 	var countNickname int64
 	// SELECT count(1) FROM users WHERE username = ?
 	db.Model(&model.User{}).Where("nickname = ?", nickname).Count(&countNickname)
-	if countNickname != 0 {
-		return true
-	}
 
-	return false
+	return countNickname != 0
 }
 
 // 注册
@@ -70,22 +64,8 @@ func GetUserInfo(uuid string) model.User {
 	db := pool.GetDB()
 
 	var queryUser *model.User
-	db.Select("nickname", "avatar", "intro", "gender", "birthday", "email", "phone", "address", "create_at", "update_at").First(&queryUser, "uuid = ?", uuid)
+	db.Select("username", "nickname", "avatar", "intro", "gender", "birthday", "email", "phone", "address", "create_at", "update_at").First(&queryUser, "uuid = ?", uuid)
 	return *queryUser
-}
-
-// 通过aid获取用户名片
-func GetNameCardByAid(aid string, token string) model.UserWithFollow {
-	db := pool.GetDB()
-
-	var user *model.UserWithFollow
-	// 左外连接+标量子查询
-	db.Raw(`SELECT u.uuid, u.nickname, u.intro, u.avatar, u.follower, u.like_received, u.article_published, f.status follow_status 
-		FROM users u
-		LEFT OUTER JOIN friends f ON f.following_uuid = u.uuid AND f.user_uuid = ?
-		WHERE u.uuid = (SELECT user_uuid FROM articles WHERE aid = ?)`, token, aid).Scan(&user)
-
-	return *user
 }
 
 // 通过uuid获取用户名片

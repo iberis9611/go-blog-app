@@ -4,10 +4,10 @@ import { styleFocus, styleBlur, styleGray, styleBlue, styleFollow } from '@/styl
 import React, { useState, useEffect, createElement } from 'react'
 import { useParams, useNavigate } from "react-router-dom"
 import { getToken } from '@/utils'
-import { useStore } from "@/store"
 import moment from 'moment'
 import './index.scss'
-import {observer} from 'mobx-react-lite'
+import { observer } from 'mobx-react-lite'
+import { useStore } from '@/store'
 // 导入中间件 连接mobx和react 完成响应式变化
 
 // Disable eslint's warning
@@ -20,74 +20,97 @@ const { TextArea } = Input
 // 文章详情页
 function Article() {
 
-    const {userStore, articleStore, commentStore} = useStore()
     const {aid} = useParams() // 获取URL中参数id的值
     const token = getToken() // 获取当前用户的token值
     const navigate = useNavigate()
+    const {articleStore, commentStore, userStore, messageStore} = useStore()
     
-    articleStore.getArticle({aid: aid}) // 获取文章对象
-    commentStore.getComment({aid: aid}) // 获取评论列表（：前的后端规定的参数名，：后的是要传入的参数）
-    userStore.getUserNameCard({aid: aid}) // 获取作者信息
+    useEffect(()=>{
+        articleStore.getArticle({aid: aid})
+        commentStore.getComment({aid: aid})
+    },[])
+
+    const {title, content, view_count, create_at, like_count, save_status, like_status,
+        user_uuid, nickname, intro, article_published, like_received, follower, avatar, follow_status} = articleStore.article
 
     const commentCountDisplayed = <span>{commentStore.commentlist.length} 条评论</span> // 显示评论数量
     const [commentContent, setCommentContent] = useState('') // 控制输入框中内容
-    const [currentToken, setCurrentToken] = useState('')
-    useEffect(()=>{
-        setCurrentToken(userStore.nameCard.token)
-    },[])
 
     // 赞文章
-    const toggleLike = () => {
-        articleStore.likeArticle({item_id: aid})
+    const toggleLike = async() => {
+        // 触发点赞方法
+        await articleStore.likeArticle({item_id: aid})
+        await articleStore.getArticle({aid: aid})
     }
     // 踩文章
-    const toggleDisLike = () => {
-        articleStore.dislikeArticle({item_id: aid})
+    const toggleDisLike = async() => {
+        await articleStore.dislikeArticle({item_id: aid})
+        await articleStore.getArticle({aid: aid})
     }
     // 收藏文章
-    const clickSave = () => {
-        articleStore.saveArticle({aid: aid})
-        console.log(articleStore.article.save_status)
+    const clickSave = async() => {
+        await articleStore.saveArticle({aid: aid})
+        await articleStore.getArticle({aid: aid})
     }
     // 关注作者
-    const toggleFollow = () => {
-        userStore.followAuthor({aid: aid})
+    const toggleFollow = async() => {
+        await userStore.followAuthor({follow_uuid: user_uuid})
+        await articleStore.getArticle({aid: aid})
     }
     // 发布评论
-    const addComment =  () => {
+    const addComment =  async() => {
         if (commentContent==='') {
             message.warning('请先输入内容')
         } else {
-            commentStore.postComment({
+            // 新增
+            await commentStore.postComment({
                 comment_content: commentContent,
                 sent_from: token,
-                sent_to: articleStore.article.user_uuid,
-                article_aid: articleStore.article.aid,
+                sent_to: user_uuid,
+                article_aid: aid,
             })
+            // 刷新
+            await commentStore.getComment({aid:aid})
             setCommentContent('') // 清空文本域
             message.success('发布评论成功！')
         }
     }
     // 删除评论
-    const removeComment = (comment) => {
-        commentStore.deleteComment({cid: comment.cid})
+    const removeComment = async(comment) => {
+        await commentStore.deleteComment({cid: comment.cid})
+        await commentStore.getComment({aid:aid})
         message.success('删除评论成功！')
     }
     // 赞评论
-    const thumbUp = (comment) => {
-        commentStore.likeComment({item_id: comment.cid})
+    const thumbUp = async(comment) => {
+        await commentStore.likeComment({item_id: comment.cid})
+        await commentStore.getComment({aid:aid})
     }
     // 踩评论
-    const thumbDown = (comment) => {
-        commentStore.dislikeComment({item_id: comment.cid})
+    const thumbDown = async(comment) => {
+        await commentStore.dislikeComment({item_id: comment.cid})
+        await commentStore.getComment({aid:aid})
     }
     // 点击头像 跳转至个人中心
     const gotoProfile = () => {
-        navigate(`/profile/${articleStore.article.user_uuid}`)
+        navigate(`/profile/${user_uuid}`)
     }
     // 获得tab的key值，实现tab变换
     const onChange = (key) => {
         console.log(key)
+    }
+    // 发私信
+    const dm = async() => {
+        await messageStore.addChat({
+            user_uuid:token,
+            to_uuid: user_uuid,
+            chat_nickname:nickname,
+            chat_avatar:avatar,
+            message_type: 1,
+        })
+        // 设置历史保存同一窗口或标签页的数据
+        sessionStorage.setItem("friend_uuid", user_uuid)
+        navigate('/message')
     }
 
     return (
@@ -96,13 +119,13 @@ function Article() {
             <Card className="articleWrapper">
                 {/* 文章内容 */}
                 <div className="articleTitle">
-                    <h1>{articleStore.article.title}</h1>
+                    <h1>{title}</h1>
                     <Space>
-                        <span><EyeOutlined /> {articleStore.article.view_count}</span>
-                        <span><ClockCircleOutlined /> {moment(articleStore.article.create_at).format('YYYY-MM-DD HH:mm:ss')}</span>
+                        <span><EyeOutlined /> {view_count}</span>
+                        <span><ClockCircleOutlined /> {moment(create_at).format('YYYY-MM-DD HH:mm:ss')}</span>
                     </Space>
                 </div>
-                <div className="article">{articleStore.article.content}</div>
+                <div className="article">{content}</div>
                 {/* 点赞 收藏条 */}
                 <div className="likesPanel">
                     <Space>
@@ -110,24 +133,24 @@ function Article() {
                             type="primary"
                             icon={<LikeOutlined />}
                             onClick={() => toggleLike()}
-                            style={articleStore.article.like_status === 1 ? styleFocus : styleBlur}
+                            style={like_status === 1 ? styleFocus : styleBlur}
                             className="likeButton"
                         >
-                            {articleStore.article.like_status === 1 ? '已点赞' : '点赞'} {articleStore.article.like_count}
+                            {like_status === 1 ? '已点赞' : '点赞'} {like_count}
                         </Button>
                         <Button
                             type="primary"
                             icon={<DislikeOutlined />}
                             onClick={() => toggleDisLike()}
-                            style={articleStore.article.like_status === -1 ? styleFocus : styleBlur}
+                            style={like_status === -1 ? styleFocus : styleBlur}
                             className="dislikeButton"
                         />
                         <Button 
                             icon={<StarOutlined />}
                             onClick={() => clickSave()}
-                            style={articleStore.article.save_status === 1 ? styleBlue : styleGray}
+                            style={save_status === 1 ? styleBlue : styleGray}
                         >
-                            {articleStore.article.save_status === 1 ? '已收藏' : '收藏'}
+                            {save_status === 1 ? '已收藏' : '收藏'}
                         </Button>
                     </Space>
                 </div>
@@ -163,6 +186,7 @@ function Article() {
                             className="comment-list"
                             itemLayout="horizontal"
                             dataSource={commentStore.commentlist}
+                            // loading={commentStore.isLoading}
                             renderItem={(comment) => (
                             <li>
                                 <Comment
@@ -213,47 +237,47 @@ function Article() {
                     <Row>
                         <Col span={7}>
                             <Card.Grid style={{width:'78px', height:'78px', padding:'0'}} onClick={()=>gotoProfile()}>
-                                <Avatar shape="square" size={78} src={userStore.avatarSrc + userStore.nameCard.avatar}/>
+                                <Avatar shape="square" size={78} src={userStore.avatarSrc + avatar}/>
                             </Card.Grid>
                         </Col>
                         <Col span={17}>
-                            <Title level={4}>{userStore.nameCard.nickname}</Title>
-                            <Text type='secondary'>{userStore.nameCard.intro}</Text>
+                            <Title level={4}>{nickname}</Title>
+                            <Text type='secondary'>{intro}</Text>
                         </Col>
                     </Row>
                     <Divider />
                     <Row gutter={16}>
                         <Col span={8}>
-                            <Statistic title="文章" value={userStore.nameCard.article_published} />
+                            <Statistic title="文章" value={article_published} />
                         </Col>
                         <Col span={8}>
-                            <Statistic title="粉丝" value={userStore.nameCard.follower} />
+                            <Statistic title="粉丝" value={follower} />
                         </Col>
                         <Col span={8}>
-                            <Statistic title="获赞" value={userStore.nameCard.like_received} />
+                            <Statistic title="获赞" value={like_received} />
                         </Col>
                     </Row>
                     <br />
                     <Row gutter={16}>
                         {
-                        currentToken !== token ?
+                        user_uuid !== token ?
                             <>
                             <Col span={12}>
                                 <Button
                                     block
                                     type="primary"
                                     onClick={() => toggleFollow()}
-                                    style={userStore.nameCard.follow_status === 1 ? styleFollow : styleFocus}
-                                    icon={userStore.nameCard.follow_status === 1 ? <MenuOutlined /> : <PlusOutlined />}
+                                    style={follow_status === 1 ? styleFollow : styleFocus}
+                                    icon={follow_status === 1 ? <MenuOutlined /> : <PlusOutlined />}
                                 >
-                                    {userStore.nameCard.follow_status === 1 ? '已关注' : '关注'}
+                                    {follow_status === 1 ? '已关注' : '关注'}
                                 </Button>
                             </Col>
                             <Col span={12}>
                                 <Button
                                     block
                                     icon={<MessageOutlined />}
-                                    href="/message"
+                                    onClick={()=>dm()}
                                 >
                                     发私信
                                 </Button>

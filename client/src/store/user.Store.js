@@ -2,7 +2,9 @@ import { makeAutoObservable, runInAction } from 'mobx'
 import { http } from '@/utils'
 
 class UserStore {
+    // 登录用户的用户信息
     userInfo = {}
+    // 当前查看用户的用户信息
     nameCard = {}
     avatarSrc = 'http://localhost:8000/file/'
 
@@ -20,16 +22,6 @@ class UserStore {
         })
     }
 
-    // 根据aid 获取文章作者名片
-    getUserNameCard = async ({aid}) => {
-        const res = await http.get(`/user/namecard?aid=${aid}`)
-        
-        runInAction(() => {
-            this.nameCard = res.data
-            console.log(res.data)
-        })
-    }
-
     // 根据uuid 获取文章作者名片
     getUserNameCardByUuid = async ({uuid}) => {
         const res = await http.get(`/user/people/${uuid}`)
@@ -40,14 +32,14 @@ class UserStore {
     }
 
     // 关注作者
-    followAuthor = async ({aid}) => {
-        await http.post(`/user/clickFollow?aid=${aid}`)
+    followAuthor = async ({follow_uuid}) => {
+        await http.post(`/user/clickFollow?follow_uuid=${follow_uuid}`)
     }
 
     // 修改用户信息
-    modifyProfile = async ({birthday,email,gender,intro,phone,address,avatar}) => {
+    modifyProfile = async ({ birthday, email, gender, intro, phone, address, avatar }) => {
         await http.post('/user/modifyProfile',{
-            birthday,email,gender,intro,phone,address,avatar
+            birthday, email, gender, intro, phone, address, avatar
         })
     }
 }

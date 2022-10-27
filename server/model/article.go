@@ -29,14 +29,26 @@ type Article struct {
 
 type ArticleWithAtitude struct {
 	Article
-	LikeStatus int8 `json:"like_status"`
-	SaveStatus int8 `json:"save_status"`
+	LikeStatus       int8   `json:"like_status"`
+	SaveStatus       int8   `json:"save_status"`
+	FollowStatus     int8   `json:"follow_status"`
+	Nickname         string `json:"nickname"`
+	Avatar           string `json:"avatar"`
+	Intro            string `json:"intro"`
+	Follower         int16  `json:"follower"`
+	ArticlePublished int16  `json:"article_published"`
+	LikeReceived     int16  `json:"like_received"`
 }
 
 type ArticleWithAvatar struct {
 	Article
 	Avatar string `json:"avatar"`
 	Author string `json:"author"`
+}
+
+type ArticlePaginated struct {
+	Result     []*ArticleWithAvatar `json:"result"`
+	TotalCount int                  `json:"total_count"`
 }
 
 func (a *Article) BeforeUpdate(tx *gorm.DB) error {

@@ -1,39 +1,25 @@
 import { Card, Button, Form, Input, Select, Cascader, DatePicker, Upload, Modal, message } from 'antd'
-import { LoadingOutlined, PlusOutlined } from '@ant-design/icons'
+import { PlusOutlined } from '@ant-design/icons'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { residences } from '@/components'
 import { Link } from 'react-router-dom'
 import { useStore } from '@/store'
+import { http } from '@/utils'
 import ImgCrop from 'antd-img-crop'
 import moment from 'moment'
 import './index.scss'
-import { http } from '@/utils'
 /* eslint-disable react-hooks/exhaustive-deps */
 
 const { Option } = Select
-//   把图片转化为base64
+// 把图片转化为base64
 const getBase64 = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.readAsDataURL(file)
-
     reader.onload = () => resolve(reader.result)
-
     reader.onerror = (error) => reject(error)
 })
-
-const getBase64b = (img, callback) => {
-    const reader = new FileReader();
-    reader.addEventListener('load', () => callback(reader.result));
-    reader.readAsDataURL(img);
-}
-
-function formatGender(gender) {
-    if (gender === 'm') {return '男'}
-    if (gender === 'f') {return '女'}
-    if (gender === 'o') {return '保密'}
-}
 
 function ModifyProfile() {
 
@@ -41,30 +27,40 @@ function ModifyProfile() {
     const navigate = useNavigate()
 
     // 上传头像的实现
-    const [loading, setLoading] = useState(false)
-    const [imageUrl, setImageUrl] = useState()
     const [previewVisible, setPreviewVisible] = useState(false) // 控制预览框的显示状态
     const [previewImage, setPreviewImage] = useState('') // 图片内容
     const [previewTitle, setPreviewTitle] = useState('') // 图片名称
-    const [avatarUrl, setAvatarUrl] = useState('') // antanhou 上传图片后 后端返回的url
-    // const [fileList, setFileList] = useState([])
+    const [fileList, setFileList] = useState([]) // 存放上传图片的列表
+    const [updateStatus, setUpdateStatus] = useState('') // 头像更改状态
+    const [avatarUrl,setAvatarUrl] = useState('') // 用于存放默认头像
     const form = useRef(null)
 
+    // 表单回显
     const loadDetail = async () => {
         const res = await http.get('user/profile')
-        console.log(res.data)
-        const {intro, gender, birthday, email, phone, address} = res.data
+        const {intro, gender, birthday, email, phone, address, avatar} = res.data
         // 表单数据回显
         form.current.setFieldsValue({
             "intro": intro,
-            "gender": formatGender(gender), // 用formatGender()把字符串转换为对应的性别
-            "birthday": moment(birthday), // DatePicker只支持moment类型的数据
+            "gender": gender,
+            // DatePicker只支持moment类型的数据，但是注册时，birthday的数据是null，datepicker会报错: invalid date
+            // 这是因为moment(null) = NaN 解决办法：给birthday赋初始值undefined
+            "birthday": birthday === null ? moment(undefined) : moment(birthday),
             "email": email,
             "phone": phone,
-            "address": address,
+            "address": address.split('-'),
         })
-        // 图片回显
-        // setFileList({avatar})
+        // 仅在已经有头像的情况下进行图片回显
+        if (avatar!=='') {
+            const myAvatar = [userStore.avatarSrc + avatar]
+            setFileList(myAvatar.map(url=>{
+                return {
+                    url: url
+                }
+            }))
+            setAvatarUrl(avatar) // 默认头像名称
+            setUpdateStatus('default') // 表示没有改头像
+        }
     } 
     useEffect(() => {
         loadDetail()
@@ -84,9 +80,10 @@ function ModifyProfile() {
     }
     // 取消预览
     const handleCancel = () => setPreviewVisible(false)
+    // 上传按钮
     const uploadButton = (
         <div>
-          {loading ? <LoadingOutlined /> : <PlusOutlined />}
+          <PlusOutlined />
           <div
             style={{
               marginTop: 8,
@@ -95,33 +92,19 @@ function ModifyProfile() {
             上传
           </div>
         </div>
-      )
-    // 点击移除图片触发
-    const onRemove = () => setImageUrl()
+    )
 
-    // 上传回调
-    const onChange = (info) => {
-        if (info.file.status === 'uploading') {
-            setLoading(true)
-            return
-        }
-        
-        if (info.file.status === 'done') {
-            // 图片上传成功后 拿到后端返回的url
-            setAvatarUrl(info.file.response.data)
-            setLoading(false)
-            // save avatar in localStorage
-            // localStorage.setItem("user-avatar", info.file.response.data.avatar)
-            getBase64b(info.file.originFileObj, (url) => {
-                setLoading(false)
-                setImageUrl(url)
-            })
-        }
+    const onChange = ({fileList}) => { // fileList是从结果中解构出来的
+        // 采取受控的写法，在最后一次的log里有response，最终fileList中存放着response.data
+        setFileList(fileList)
+        setUpdateStatus('')
     }
 
     // 提交表单
+    // 注意：这里的values是表单提交的值
     const onFinish = async (values) => {
         const {birthday,email,gender,intro,phone,address} = values
+        // avatar的取值：1 在进入修改页面前已有头像，且未修改头像，则使用默认的URL；2 未上传头像/已上传新头像/删除之前的头像，则取fileList里的URL
         const params = {
             birthday,
             email,
@@ -129,10 +112,11 @@ function ModifyProfile() {
             intro,
             phone,
             address: address === undefined ? '' : address.join('-'),
-            avatar: avatarUrl
+            avatar: updateStatus === 'default' ? avatarUrl : fileList.map(item=> item.response.data)[0],
         }
         try {
             await userStore.modifyProfile(params)
+            await userStore.getUserInfo() // 刷新头像显示
             navigate('/')
             message.success('编辑用户信息成功！')
         } catch (e) {
@@ -160,12 +144,11 @@ function ModifyProfile() {
                             listType="picture-card"
                             action="http://localhost:8000/file/upload"
                             headers={{"Authorization": "Bearer " + localStorage.getItem("pc-key")}}
+                            fileList={fileList}
                             onChange={onChange}
                             onPreview={onPreview}
-                            onRemove={onRemove}
-                            // fileList={fileList}
                         >
-                            {imageUrl ? null :uploadButton}
+                            {fileList.length >= 1 ? null :uploadButton}
                         </Upload>
                     </ImgCrop>
                 </Form.Item>
@@ -181,9 +164,9 @@ function ModifyProfile() {
                     hasFeedback
                 >
                     <Select placeholder="请选择性别">
-                    <Option value="m">男</Option>
-                    <Option value="f">女</Option>
-                    <Option value="o">保密</Option>
+                    <Option value="男">男</Option>
+                    <Option value="女">女</Option>
+                    <Option value="其他">其他</Option>
                     </Select>
                 </Form.Item>
                 <Form.Item
@@ -191,7 +174,8 @@ function ModifyProfile() {
                     label="生日"
                     hasFeedback
                 >
-                    <DatePicker placeholder='选择日期' style={{display:"flex"}} />
+                    <DatePicker style={{display:"flex"}} />
+                   {/* <DatePicker />  */}
                 </Form.Item>
                 <Form.Item
                     name="email"
@@ -234,12 +218,18 @@ function ModifyProfile() {
                     {
                         type: 'array',
                         required: false,
-                        message: '请选择您的所在地！',
                     },
                     ]}
                     hasFeedback
                 >
-                    <Cascader options={residences} />
+                    <Cascader 
+                        fieldNames={{
+                            label: 'name',
+                            value: 'name',
+                            children: 'items',
+                        }}
+                        options={residences} 
+                    />
                 </Form.Item>
                 <Form.Item className='submitModification'>
                         <Button block type="primary" htmlType="submit">确认修改</Button>

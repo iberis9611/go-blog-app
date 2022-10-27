@@ -26,18 +26,18 @@ func FollowStatus(aid string, user_uuid string) int8 {
 
 // 点击关注
 // following 被关注者的uuid，user 用户uuid
-func ClickFollow(aid string, user_uuid string) error {
+func ClickFollow(follow_uuid string, my_uuid string) error {
 	db := pool.GetDB()
 
 	// 判断即将关注的用户是否存在
 	var following *model.User
-	db.Raw("SELECT id, uuid, follower FROM users WHERE uuid=(SELECT user_uuid FROM articles WHERE aid = ?)", aid).Scan(&following)
+	db.First(&following, "uuid = ?", follow_uuid)
 	if following.Id == 0 || following.DeleteAt == 1 {
 		return errors.New("用户不存在")
 	}
 
 	var user *model.User
-	db.First(&user, "uuid = ?", user_uuid)
+	db.First(&user, "uuid = ?", my_uuid)
 	if user.Id == 0 || user.DeleteAt == 1 {
 		return errors.New("用户不存在")
 	}
@@ -48,12 +48,12 @@ func ClickFollow(aid string, user_uuid string) error {
 	}
 
 	var friend *model.Friend
-	db.First(&friend, "following_uuid = ? AND user_uuid = ?", following.Uuid, user_uuid)
+	db.First(&friend, "following_uuid = ? AND user_uuid = ?", following.Uuid, my_uuid)
 
 	// 判断关注记录是否存在 不存在则创建记录
 	if friend.Id == 0 {
 		friend.FollowingUuid = following.Uuid
-		friend.UserUuid = user_uuid
+		friend.UserUuid = my_uuid
 		friend.FollowAt = time.Now()
 		friend.Status = 1
 		// friend表 新增记录

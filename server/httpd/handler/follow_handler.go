@@ -4,19 +4,13 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/iberis9611/go-blog-application/httpd/router"
 	"github.com/iberis9611/go-blog-application/pkg/common/response"
 	"github.com/iberis9611/go-blog-application/service"
 )
 
 // 查询关注状态
 func FollowStatus(c *gin.Context) {
-	token := router.BearerAuthHeader(c)
-
-	if token == "" {
-		c.JSON(http.StatusUnauthorized, response.FailureMsg("用户未登录"))
-		return
-	}
+	token := c.MustGet("token").(string)
 
 	aid := c.Query("aid")
 
@@ -25,15 +19,11 @@ func FollowStatus(c *gin.Context) {
 
 // 点击关注
 func ClickFollow(c *gin.Context) {
-	token := router.BearerAuthHeader(c)
-	if token == "" {
-		c.JSON(http.StatusUnauthorized, response.FailureMsg("用户未登录"))
-		return
-	}
+	token := c.MustGet("token").(string)
 
-	aid := c.Query("aid")
+	follow := c.Query("follow_uuid")
 
-	err := service.ClickFollow(aid, token)
+	err := service.ClickFollow(follow, token)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, response.FailureMsg("未知错误"))
 		return

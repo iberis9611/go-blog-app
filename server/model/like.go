@@ -2,7 +2,7 @@ package model
 
 import "time"
 
-// Like 点赞表
+// 点赞表
 type Like struct {
 	// 点赞表id
 	Id int32 `json:"id" gorm:"primaryKey; autoIncrement; comment:'id'"`

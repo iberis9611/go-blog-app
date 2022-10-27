@@ -8,18 +8,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/iberis9611/go-blog-application/config"
-	"github.com/iberis9611/go-blog-application/httpd/router"
 	"github.com/iberis9611/go-blog-application/pkg/common/response"
 )
 
 // 上传文件
 func SaveFile(c *gin.Context) {
-
-	token := router.BearerAuthHeader(c)
-	if token == "" {
-		c.JSON(http.StatusUnauthorized, response.FailureMsg("用户未登录"))
-		return
-	}
 
 	// 上传单个图片
 	file, err := c.FormFile("file")
@@ -47,6 +40,7 @@ func SaveFile(c *gin.Context) {
 
 // 前端通过文件名称获取文件流，显示文件
 func GetFile(c *gin.Context) {
+
 	fileName := c.Param("fileName")
 	data, _ := ioutil.ReadFile(config.GetConfig().StaticPath.FilePath + fileName)
 	c.Writer.Write(data)

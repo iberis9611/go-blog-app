@@ -3,20 +3,17 @@ appName = "go-blog"
 [mysql]
 host = "127.0.0.1"
 port = 3306
-name = "blogger"
+name = "blog"
 user = "root"
-password = "Bunch5678."
+password = "bunch1234"
 timeout = "10s"
+
+[log]
+level = "debug"
+path = "logs/blog.log"
 
 [staticPath]
 filePath = "web/static/file/"
 
-# [log]
-# level = "debug"
-# path = "logs/blog.log"
-
-# [msgChannelType]
-# channelType = "gochannel"
-
-# kafkaHosts = "kafka:9092"
-# kafkaTopic = "go-blog-message"
+[msgChannelType]
+channelType = "gochannel"

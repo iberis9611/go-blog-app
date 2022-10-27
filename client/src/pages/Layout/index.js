@@ -1,32 +1,32 @@
 import { Avatar, Col, Input, Layout, Menu, Row, message, Popconfirm } from "antd"
 import { Outlet, Link, useNavigate } from "react-router-dom"
-import { UserOutlined } from '@ant-design/icons'
 import { useEffect, useState } from "react"
 import { useStore } from "@/store"
 import { observer } from 'mobx-react-lite'
 import './index.scss'
 import { getToken } from "@/utils"
 
-const {Header, Content, Footer} = Layout
-const {Search} = Input
+const { Header, Content } = Layout
+const { Search } = Input
 
 function MyLayout() {
     
-    const {loginStore, userStore}= useStore()
+    const { loginStore, userStore }= useStore()
     const navigate = useNavigate()
 
     // 当给useEffect传空数组（空依赖项）时，这里的回调函数仅执行一次
     useEffect(() => {
         userStore.getUserInfo()
     }, [userStore])
-    const {avatarSrc} = userStore
-    const {nickname, avatar} = userStore.userInfo
+    const { avatarSrc } = userStore
+    const { nickname, avatar } = userStore.userInfo
 
     const cancel = () => {
         message.error('取消退出')
     }
     const confirm = () => {
         loginStore.logout() // 移除token
+        
         navigate('/login') // 跳转
         message.success('退出成功！')
     }
@@ -41,18 +41,8 @@ function MyLayout() {
             key: 'trending',
         },
         {
-            label: '内容管理',
+            label: <Link to={'/published'}>内容管理</Link>,
             key: 'contents',
-            children:[
-                {
-                    label: <Link to={'/published'}>我的文章</Link>,
-                    key: 'published',
-                },
-                {
-                    label: <Link to={'/publish'}>发布文章</Link>,
-                    key: 'publish',
-                },
-            ],
         },
         {
             label: <Link to={'/message'}>私信</Link>,
@@ -94,7 +84,6 @@ function MyLayout() {
     const [current, setCurrent] = useState('home')
 
     const onClick = (e) => {
-        console.log('click ', e)
         setCurrent(e.key)
     }
     const token = getToken()
@@ -121,27 +110,20 @@ function MyLayout() {
                             mode="horizontal" 
                             items={userItems} 
                         />
-                        {
-                        avatar === "" ?
-                        <Avatar className="header-avatar" size={45} icon={<UserOutlined />} onClick={()=>gotoProfile()} />
-                        :
-                        <Avatar className="header-avatar" size={45} src={avatarSrc + avatar} onClick={()=>gotoProfile()} />
-                        }
+                        <Avatar 
+                            className="header-avatar" 
+                            size={45} 
+                            src={ avatar === '' ? avatarSrc+'guest.png' : avatarSrc + avatar} 
+                            onClick={()=>gotoProfile()} 
+                        />
                         <span className="header-uname">{nickname}</span>
                     </Col>
                 </Row>
             </Header>
-            <Content className="content" style={{position:"relative"}}>
+            <Content className="content">
                 {/* 二级路由出口 */}
                 <Outlet />
             </Content>
-            <Footer
-                style={{
-                    textAlign:'center'
-                }}
-            >
-                Iberis Blog ©2022 Created by Iberis9611
-            </Footer>
         </Layout>
     )
 }

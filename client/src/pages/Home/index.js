@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import { useStore } from '@/store'
 import { http } from '@/utils'
 import './index.scss'
+/* eslint-disable react-hooks/exhaustive-deps */
 
 const IconText = ({ icon, text }) => (
 <Space>
@@ -16,19 +17,29 @@ const IconText = ({ icon, text }) => (
 function Home() {
 
     const {userStore} = useStore()
-
+    const {avatarSrc} = userStore
     // 文章列表管理
-    const [articleList, setArticleList] = useState([])
+    const [articleData, setArticleData] = useState({
+        list: [],
+        count: 0,
+    }) 
+    const [params, setParams] = useState({
+        page: 1,
+        per_page: 5,
+    })
     const loadArticleList = async () => {
         // http.get('/data')发送接口请求，用res接收数据
-        const res = await http.get('/articles')
+        const res = await http.get(`/articleList?search_type=all&page=${params.page}&per_page=${params.per_page}`)
         // 调用setArticleList，将数据存入articleList中
-        setArticleList(res.data)
-        console.log(res.data)
+        const { result, total_count } = res.data
+        setArticleData({
+            list: result,
+            count: total_count,
+        })
     }
     useEffect(() => {
         loadArticleList() // 外面写里面调
-    }, [])
+    }, [params])
 
     return (
         <div className='homeWrapper' style={{margin:'0 50px'}}>
@@ -36,15 +47,19 @@ function Home() {
             itemLayout="vertical"
             size="large"
             pagination={{
-            onChange: (page) => {
-                console.log(page);
-            },
-            pageSize: 10,
+                pageSize: params.per_page,
+                total: articleData.count,
+                onChange: (page) => {
+                    setParams({
+                        ...params,
+                        page,
+                    })
+                },
             }}
             style={{
                 background:'#f0f2f5',
             }}
-            dataSource={articleList}
+            dataSource={articleData.list}
             renderItem={(art) => (
                 <Link to={'article/'+art.aid}>
                 <Card.Grid style={{width:'100%', background:'antiquewhite', margin:'5px 0', padding:'0', cursor:'auto'}}>
@@ -68,7 +83,7 @@ function Home() {
                         }
                     >
                         <List.Item.Meta
-                            avatar={<Avatar size={45} src={userStore.avatarSrc+art.avatar} />}
+                            avatar={<Avatar size={45} src={art.avatar === '' ? avatarSrc+'guest.png' : avatarSrc+art.avatar} /> }
                             title={art.title}
                             description={art.author}
                         />

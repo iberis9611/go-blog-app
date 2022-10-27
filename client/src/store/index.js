@@ -4,8 +4,9 @@ import LoginStore from "./login.Store"
 import UserStore from "./user.Store"
 import CommentStore from "./comment.Store"
 import ArticleStore from "./article.Store"
-import RegisterStore
- from "./register.Store"
+import RegisterStore from "./register.Store"
+import MessageStore from "./message.Store"
+
 class RootStore {
     constructor() {
         this.loginStore = new LoginStore()
@@ -13,6 +14,7 @@ class RootStore {
         this.commentStore = new CommentStore()
         this.articleStore = new ArticleStore()
         this.registerStore = new RegisterStore()
+        this.messageStore = new MessageStore()
     }
 }
 

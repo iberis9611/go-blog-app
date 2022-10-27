@@ -5,14 +5,14 @@ class ArticleStore {
     // 1 定义数据
     article = {}
     articleList = []
-
+    // like_count, like_status, save_status, follow_status, article_published, like_received, follower
     constructor() {
         // 2 响应式处理
         makeAutoObservable(this)
     }
 
     // 3 定义action函数
-    // 获取文章
+    // 获取文章详情
     getArticle = async ({aid}) => {
         const res = await http.get(`/article/${aid}`)
 

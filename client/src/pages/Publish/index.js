@@ -18,20 +18,22 @@ function Publish() {
     const form = useRef(null)
     
     const loadDetail = async () => {
-        const res = await http.get(`/articleSimple/${aid}`)
-        console.log(res.data)
+        if(aid!==null) {
+            const res = await http.get(`/articleSimple/${aid}`)
+            console.log(res.data)
 
-        const {title, content} = res.data
-        // 表单数据回显
-        form.current.setFieldsValue({
-            "title": title,
-            "content": content
-        })
-        // 图片回显
-        // setFileList({avatar})
+            const {title, content} = res.data
+            // 表单数据回显
+            form.current.setFieldsValue({
+                "title": title,
+                "content": content
+            })
+            // 图片回显
+        }
     } 
+
     useEffect(() => {
-        loadDetail()
+            loadDetail()
     }, [])
 
     // 提交表单

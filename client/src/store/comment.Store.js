@@ -7,7 +7,8 @@ import { http } from '@/utils'
 // WHERE delete_at = 0 AND article_aid = 'art-f027a570-6084-40d9-8412-aa860aae6faa');
 class CommentStore {
     // 1 定义数据
-    commentlist = []
+    loading = false
+    commentlist =  []
 
     constructor() {
         // 2 数据响应式处理
@@ -15,16 +16,15 @@ class CommentStore {
     }
 
     // 3 定义action函数
-    
     // a 获取评论列表
     getComment = async ({aid}) => { // 这里是从前端解构过来的aid
-        // 调接口，GET里面的参数名称要和后端保持一致
+ 
         const res = await http.get(`/comments?aid=${aid}`)
-
         runInAction(() => {
             // 存数据
             this.commentlist = res.data
         })
+        // 调接口，GET里面的参数名称要和后端保持一致  
     }
 
     // b 添加评论
@@ -40,7 +40,6 @@ class CommentStore {
     // c 删除评论
     deleteComment = async ({cid}) => {
         await http.post(`/comments/del?cid=${cid}`)
-
     }
 
     // d 给评论点赞

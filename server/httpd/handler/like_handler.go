@@ -4,23 +4,13 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/iberis9611/go-blog-application/httpd/router"
 	"github.com/iberis9611/go-blog-application/pkg/common/response"
 	"github.com/iberis9611/go-blog-application/service"
 )
 
 func GetLikeStatus(c *gin.Context) {
 
-	// 鉴权
-	token := router.BearerAuthHeader(c)
-
-	// token异常
-	if token == "" {
-		c.JSON(http.StatusUnauthorized, response.FailureMsg("用户未登录"))
-		return
-	}
-
-	// token正确
+	token := c.MustGet("token").(string)
 	item_id := c.Query("aid") // 获取文章aid
 	status, err := service.GetLikeStatus(item_id, token)
 	if err != nil {
@@ -33,16 +23,8 @@ func GetLikeStatus(c *gin.Context) {
 
 func ClickLike(c *gin.Context) {
 
-	// 鉴权
-	token := router.BearerAuthHeader(c)
+	token := c.MustGet("token").(string)
 
-	// token异常
-	if token == "" {
-		c.JSON(http.StatusUnauthorized, response.FailureMsg("用户未登录"))
-		return
-	}
-
-	// token正确
 	item_id := c.Query("item_id")
 	err := service.Like(item_id, token)
 	if err != nil {
@@ -55,16 +37,8 @@ func ClickLike(c *gin.Context) {
 
 func ClickDislike(c *gin.Context) {
 
-	// 鉴权
-	token := router.BearerAuthHeader(c)
+	token := c.MustGet("token").(string)
 
-	// token异常
-	if token == "" {
-		c.JSON(http.StatusUnauthorized, response.FailureMsg("用户未登录"))
-		return
-	}
-
-	// token正确
 	item_id := c.Query("item_id")
 	err := service.Dislike(item_id, token)
 	if err != nil {

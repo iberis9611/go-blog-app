@@ -28,8 +28,7 @@ type User struct {
 	Email    string     `json:"email" gorm:"type:varchar(80);default:'';not null;column:email;comment:'邮箱'"`
 	Phone    string     `json:"phone" gorm:"type:char(11);default:'';not null;comment:'电话'"`
 	Avatar   string     `json:"avatar" gorm:"type:varchar(260);default:'';not null;comment:'头像'"`
-	// m - male, f - female, o - other
-	Gender string `json:"gender" gorm:"type:char(1); default:'o'; not null; comment:'性别'"`
+	Gender   string     `json:"gender" gorm:"type:varchar(2); default:''; not null; comment:'性别'"`
 }
 
 type UserWithFollow struct {
